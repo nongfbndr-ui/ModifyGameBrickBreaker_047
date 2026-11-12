@@ -648,3 +648,212 @@ def show_end_screen(state, score, stars):
                     return "QUIT"
 
 
+# ============================================================
+# GAME UTAMA
+# ============================================================
+def play_game(stars):
+    paddle = Paddle()
+    ball = Ball()
+
+    score = 0
+    lives = 3
+    level = 1
+
+    bricks = create_bricks(level)
+    particles = []
+
+    paused = False
+    running = True
+
+    while running:
+        clock.tick(FPS)
+
+        # ====================================================
+        # EVENT
+        # ====================================================
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "QUIT"
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return "QUIT"
+
+                if event.key == pygame.K_p:
+                    paused = not paused
+
+        # ====================================================
+        # UPDATE GAME
+        # ====================================================
+        if not paused:
+            paddle.update()
+
+            ball_lost = ball.update()
+
+            # Tabrakan bola dengan paddle
+            ball.bounce_from_paddle(paddle)
+
+            # Tabrakan bola dengan brick
+            for brick in bricks[:]:
+                if ball.rect.colliderect(brick.rect):
+                    ball.bounce_from_brick(brick)
+
+                    brick_destroyed = brick.hit()
+
+                    if brick_destroyed:
+                        score += 10 * brick.max_health
+
+                        create_particles(
+                            particles,
+                            brick.rect.centerx,
+                            brick.rect.centery,
+                            brick.color
+                        )
+
+                        bricks.remove(brick)
+
+                        # Bola bertambah cepat setiap brick hancur
+                        ball.increase_speed(0.07)
+
+                    else:
+                        score += 2
+
+                    # Hanya satu collision setiap frame
+                    break
+
+            # Update partikel
+            active_particles = []
+
+            for particle in particles:
+                if particle.update():
+                    active_particles.append(particle)
+
+            particles = active_particles
+
+            # Jika bola jatuh
+            if ball_lost:
+                lives -= 1
+
+                if lives <= 0:
+                    result = show_end_screen(
+                        "LOSE",
+                        score,
+                        stars
+                    )
+
+                    return result
+
+                paddle.reset()
+                ball.reset(level)
+
+            # Jika semua brick pada level habis
+            if len(bricks) == 0:
+                level += 1
+
+                # Menang setelah menyelesaikan level 3
+                if level > 3:
+                    result = show_end_screen(
+                        "WIN",
+                        score,
+                        stars
+                    )
+
+                    return result
+
+                bricks = create_bricks(level)
+                paddle.reset()
+                ball.reset(level)
+
+        # ====================================================
+        # GAMBAR BACKGROUND
+        # ====================================================
+        screen.fill(DARK_BLUE)
+        update_and_draw_stars(stars)
+
+        # Garis pembatas area permainan
+        pygame.draw.line(
+            screen,
+            (60, 70, 100),
+            (0, 55),
+            (WIDTH, 55),
+            2
+        )
+
+        # ====================================================
+        # GAMBAR HUD
+        # ====================================================
+        score_text = small_font.render(
+            f"Skor: {score}",
+            True,
+            WHITE
+        )
+
+        lives_text = small_font.render(
+            f"Nyawa: {lives}",
+            True,
+            WHITE
+        )
+
+        level_text = small_font.render(
+            f"Level: {level}/3",
+            True,
+            WHITE
+        )
+
+        pause_text = small_font.render(
+            "P: Pause",
+            True,
+            GRAY
+        )
+
+        screen.blit(score_text, (20, 18))
+        screen.blit(lives_text, (200, 18))
+        screen.blit(level_text, (380, 18))
+        screen.blit(pause_text, (670, 18))
+
+        # ====================================================
+        # GAMBAR OBJEK
+        # ====================================================
+        for brick in bricks:
+            brick.draw()
+
+        for particle in particles:
+            particle.draw()
+
+        paddle.draw()
+        ball.draw()
+
+        if paused:
+            show_pause()
+
+        pygame.display.flip()
+
+
+# ============================================================
+# PROGRAM UTAMA
+# ============================================================
+def main():
+    stars = create_stars()
+
+    start_game = show_menu(stars)
+
+    if not start_game:
+        pygame.quit()
+        return
+
+    program_running = True
+
+    while program_running:
+        result = play_game(stars)
+
+        if result == "QUIT":
+            program_running = False
+
+        elif result == "RESTART":
+            continue
+
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    main()
