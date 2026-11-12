@@ -487,3 +487,164 @@ def create_particles(particles, x, y, color):
         )
 
 
+# ============================================================
+# MENU UTAMA
+# ============================================================
+def show_menu(stars):
+    while True:
+        screen.fill(BLACK)
+        update_and_draw_stars(stars)
+
+        draw_center_text(
+            "BLOCK BREAKER",
+            title_font,
+            CYAN,
+            150
+        )
+
+        draw_center_text(
+            "DELUXE",
+            large_font,
+            YELLOW,
+            215
+        )
+
+        draw_center_text(
+            "Tekan SPACE untuk mulai",
+            medium_font,
+            WHITE,
+            330
+        )
+
+        draw_center_text(
+            "Gerak: Panah kiri/kanan atau A dan D",
+            small_font,
+            GRAY,
+            390
+        )
+
+        draw_center_text(
+            "P = Pause | ESC = Keluar",
+            small_font,
+            GRAY,
+            425
+        )
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    return True
+
+                if event.key == pygame.K_ESCAPE:
+                    return False
+
+
+# ============================================================
+# LAYAR PAUSE
+# ============================================================
+def show_pause():
+    overlay = pygame.Surface(
+        (WIDTH, HEIGHT),
+        pygame.SRCALPHA
+    )
+
+    overlay.fill((0, 0, 0, 180))
+    screen.blit(overlay, (0, 0))
+
+    draw_center_text(
+        "PAUSE",
+        large_font,
+        YELLOW,
+        HEIGHT // 2 - 40
+    )
+
+    draw_center_text(
+        "Tekan P untuk melanjutkan",
+        small_font,
+        WHITE,
+        HEIGHT // 2 + 30
+    )
+
+    pygame.display.flip()
+
+
+# ============================================================
+# LAYAR AKHIR
+# ============================================================
+def show_end_screen(state, score, stars):
+    while True:
+        screen.fill(BLACK)
+        update_and_draw_stars(stars)
+
+        if state == "WIN":
+            draw_center_text(
+                "KAMU MENANG!",
+                large_font,
+                GREEN,
+                180
+            )
+
+            draw_center_text(
+                "Semua level berhasil diselesaikan",
+                medium_font,
+                WHITE,
+                250
+            )
+
+        else:
+            draw_center_text(
+                "GAME OVER",
+                large_font,
+                RED,
+                180
+            )
+
+            draw_center_text(
+                "Nyawamu sudah habis",
+                medium_font,
+                WHITE,
+                250
+            )
+
+        draw_center_text(
+            f"Skor akhir: {score}",
+            medium_font,
+            YELLOW,
+            315
+        )
+
+        draw_center_text(
+            "Tekan R untuk bermain lagi",
+            small_font,
+            WHITE,
+            390
+        )
+
+        draw_center_text(
+            "Tekan ESC untuk keluar",
+            small_font,
+            GRAY,
+            425
+        )
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "QUIT"
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    return "RESTART"
+
+                if event.key == pygame.K_ESCAPE:
+                    return "QUIT"
+
+
