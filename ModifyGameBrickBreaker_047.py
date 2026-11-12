@@ -289,3 +289,201 @@ class Ball:
         )
 
 
+# ============================================================
+# CLASS BRICK
+# ============================================================
+class Brick:
+    def __init__(self, x, y, width, height, health, color):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.health = health
+        self.max_health = health
+        self.color = color
+
+    def hit(self):
+        self.health -= 1
+        return self.health <= 0
+
+    def draw(self):
+        # Bayangan brick
+        shadow = self.rect.copy()
+        shadow.x += 3
+        shadow.y += 3
+
+        pygame.draw.rect(
+            screen,
+            (20, 20, 35),
+            shadow,
+            border_radius=5
+        )
+
+        # Warna berubah ketika brick rusak
+        if self.health == 1 and self.max_health > 1:
+            display_color = tuple(
+                max(50, value - 80)
+                for value in self.color
+            )
+        else:
+            display_color = self.color
+
+        pygame.draw.rect(
+            screen,
+            display_color,
+            self.rect,
+            border_radius=5
+        )
+
+        pygame.draw.rect(
+            screen,
+            WHITE,
+            self.rect,
+            width=2,
+            border_radius=5
+        )
+
+        # Tampilkan ketahanan brick jika lebih dari satu
+        if self.health > 1:
+            health_text = small_font.render(
+                str(self.health),
+                True,
+                WHITE
+            )
+
+            health_rect = health_text.get_rect(
+                center=self.rect.center
+            )
+
+            screen.blit(health_text, health_rect)
+
+
+# ============================================================
+# CLASS PARTICLE
+# ============================================================
+class Particle:
+    def __init__(self, x, y, color):
+        self.x = float(x)
+        self.y = float(y)
+
+        self.dx = random.uniform(-3, 3)
+        self.dy = random.uniform(-4, 1)
+
+        self.radius = random.randint(2, 5)
+        self.life = random.randint(20, 40)
+        self.color = color
+
+    def update(self):
+        self.x += self.dx
+        self.y += self.dy
+
+        self.dy += 0.15
+        self.life -= 1
+
+        return self.life > 0
+
+    def draw(self):
+        if self.life > 0:
+            pygame.draw.circle(
+                screen,
+                self.color,
+                (int(self.x), int(self.y)),
+                self.radius
+            )
+
+
+# ============================================================
+# MEMBUAT BACKGROUND BINTANG
+# ============================================================
+def create_stars():
+    stars = []
+
+    for _ in range(100):
+        stars.append({
+            "x": random.randint(0, WIDTH),
+            "y": random.randint(0, HEIGHT),
+            "size": random.choice([1, 1, 1, 2]),
+            "speed": random.uniform(0.2, 0.8)
+        })
+
+    return stars
+
+
+def update_and_draw_stars(stars):
+    for star in stars:
+        star["y"] += star["speed"]
+
+        if star["y"] > HEIGHT:
+            star["y"] = 0
+            star["x"] = random.randint(0, WIDTH)
+
+        pygame.draw.circle(
+            screen,
+            GRAY,
+            (int(star["x"]), int(star["y"])),
+            star["size"]
+        )
+
+
+# ============================================================
+# MEMBUAT BRICK BERDASARKAN LEVEL
+# ============================================================
+def create_bricks(level):
+    bricks = []
+
+    columns = 10
+    rows = 4 + level
+
+    gap = 6
+    brick_width = 70
+    brick_height = 25
+
+    total_width = columns * brick_width + (columns - 1) * gap
+    start_x = (WIDTH - total_width) // 2
+    start_y = 80
+
+    for row in range(rows):
+        for column in range(columns):
+            x = start_x + column * (brick_width + gap)
+            y = start_y + row * (brick_height + gap)
+
+            color = BRICK_COLORS[
+                row % len(BRICK_COLORS)
+            ]
+
+            # Level lebih tinggi menghasilkan brick lebih kuat
+            if level == 1:
+                health = 1
+
+            elif level == 2:
+                health = 2 if row < 2 else 1
+
+            else:
+                if row < 2:
+                    health = 3
+                elif row < 4:
+                    health = 2
+                else:
+                    health = 1
+
+            bricks.append(
+                Brick(
+                    x,
+                    y,
+                    brick_width,
+                    brick_height,
+                    health,
+                    color
+                )
+            )
+
+    return bricks
+
+
+# ============================================================
+# MEMBUAT EFEK PARTIKEL
+# ============================================================
+def create_particles(particles, x, y, color):
+    for _ in range(15):
+        particles.append(
+            Particle(x, y, color)
+        )
+
+
