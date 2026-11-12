@@ -133,3 +133,159 @@ class Paddle:
         )
 
 
+# ============================================================
+# CLASS BALL
+# ============================================================
+class Ball:
+    def __init__(self):
+        self.radius = 10
+        self.base_speed = 5
+        self.speed = self.base_speed
+
+        self.x = float(WIDTH // 2)
+        self.y = float(HEIGHT - 100)
+
+        self.dx = random.choice([-1, 1]) * self.speed
+        self.dy = -self.speed
+
+        # Rect langsung dibuat agar collision tidak error
+        self.rect = pygame.Rect(
+            int(self.x - self.radius),
+            int(self.y - self.radius),
+            self.radius * 2,
+            self.radius * 2
+        )
+
+    def update_rect(self):
+        self.rect.x = int(self.x - self.radius)
+        self.rect.y = int(self.y - self.radius)
+
+    def update(self):
+        self.x += self.dx
+        self.y += self.dy
+
+        # Tabrakan dinding kiri
+        if self.x - self.radius <= 0:
+            self.x = self.radius
+            self.dx = abs(self.dx)
+
+        # Tabrakan dinding kanan
+        if self.x + self.radius >= WIDTH:
+            self.x = WIDTH - self.radius
+            self.dx = -abs(self.dx)
+
+        # Tabrakan bagian atas
+        if self.y - self.radius <= 0:
+            self.y = self.radius
+            self.dy = abs(self.dy)
+
+        self.update_rect()
+
+        # Mengembalikan True jika bola jatuh
+        return self.y - self.radius > HEIGHT
+
+    def bounce_from_paddle(self, paddle):
+        # Pastikan bola sedang bergerak ke bawah
+        if self.dy > 0 and self.rect.colliderect(paddle.rect):
+            self.y = paddle.rect.top - self.radius
+
+            # Menghitung posisi benturan pada paddle
+            distance = self.x - paddle.rect.centerx
+            normalized_distance = distance / (paddle.rect.width / 2)
+
+            # Sudut pantulan maksimum 60 derajat
+            angle = normalized_distance * math.radians(60)
+
+            current_speed = math.sqrt(
+                self.dx ** 2 + self.dy ** 2
+            )
+
+            self.dx = current_speed * math.sin(angle)
+            self.dy = -abs(current_speed * math.cos(angle))
+
+            self.update_rect()
+
+    def bounce_from_brick(self, brick):
+        overlap_left = self.rect.right - brick.rect.left
+        overlap_right = brick.rect.right - self.rect.left
+        overlap_top = self.rect.bottom - brick.rect.top
+        overlap_bottom = brick.rect.bottom - self.rect.top
+
+        minimum_overlap = min(
+            overlap_left,
+            overlap_right,
+            overlap_top,
+            overlap_bottom
+        )
+
+        # Menentukan sisi brick yang terkena
+        if minimum_overlap == overlap_left:
+            self.dx = -abs(self.dx)
+            self.x = brick.rect.left - self.radius
+
+        elif minimum_overlap == overlap_right:
+            self.dx = abs(self.dx)
+            self.x = brick.rect.right + self.radius
+
+        elif minimum_overlap == overlap_top:
+            self.dy = -abs(self.dy)
+            self.y = brick.rect.top - self.radius
+
+        else:
+            self.dy = abs(self.dy)
+            self.y = brick.rect.bottom + self.radius
+
+        self.update_rect()
+
+    def increase_speed(self, amount=0.25):
+        current_speed = math.sqrt(
+            self.dx ** 2 + self.dy ** 2
+        )
+
+        if current_speed == 0:
+            return
+
+        new_speed = min(current_speed + amount, 11)
+
+        self.dx = (self.dx / current_speed) * new_speed
+        self.dy = (self.dy / current_speed) * new_speed
+
+    def reset(self, level=1):
+        self.x = float(WIDTH // 2)
+        self.y = float(HEIGHT - 100)
+
+        self.speed = min(
+            self.base_speed + (level - 1) * 0.7,
+            9
+        )
+
+        self.dx = random.choice([-1, 1]) * self.speed
+        self.dy = -self.speed
+
+        self.update_rect()
+
+    def draw(self):
+        # Efek cahaya luar
+        pygame.draw.circle(
+            screen,
+            (80, 120, 180),
+            (int(self.x), int(self.y)),
+            self.radius + 4
+        )
+
+        pygame.draw.circle(
+            screen,
+            WHITE,
+            (int(self.x), int(self.y)),
+            self.radius
+        )
+
+        # Titik cahaya
+        pygame.draw.circle(
+            screen,
+            CYAN,
+            (int(self.x - 3), int(self.y - 3)),
+            3
+        )
+
+
